@@ -26,19 +26,22 @@ agentic_helper.Harness ──imports──► run_agent.AIAgent   (Hermes, in-pr
 
 ## Setup
 
-Hermes is used as a library, so it needs to be cloned and its deps synced:
+Hermes runs from source (it discovers tools by importing repo modules), so it
+needs a checkout. Rather than clone by hand, `install_hermes.sh` uses Hermes'
+**official installer** — the supported, current path — which lays down a checkout
++ venv at `~/.hermes/hermes-agent`. (The `pip install hermes-agent` package is
+deprecated and stale, so we don't use it.)
 
 ```bash
-./scripts/install_hermes.sh          # clone + uv sync + ~/.hermes layout + link plugin + configure Moonshot
+./scripts/install_hermes.sh          # official installer + link plugin + configure Moonshot
 echo 'MOONSHOT_API_KEY=sk-...' >> ~/.hermes/.env      # Hermes pulls the key from this env var
 cp .env.example .env                 # optional: override model/provider/toolsets per-run
 ```
 
-`install_hermes.sh` clones into `~/hermes-agent` by default (override with
-`HERMES_REPO=/path`) and registers **Moonshot (Kimi)** as a custom provider whose
-API key is read from `$MOONSHOT_API_KEY` — the key is never written into config.
-Change the model with `MOONSHOT_MODEL=...` before running the installer, or edit
-`~/.hermes/config.yaml` afterward.
+The installer registers **Moonshot (Kimi)** as a custom provider whose API key is
+read from `$MOONSHOT_API_KEY` — the key is never written into config. Change the
+model with `MOONSHOT_MODEL=...` before running it, or edit `~/.hermes/config.yaml`
+afterward. If you already have a checkout elsewhere, set `HERMES_REPO=/path`.
 
 ## Usage
 

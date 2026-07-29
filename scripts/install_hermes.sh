@@ -1,35 +1,37 @@
 #!/usr/bin/env bash
-# Install the Hermes Agent (for in-process library use) and wire up this harness.
+# Set up Hermes for in-process use, then wire up this harness.
+#
+# Uses the OFFICIAL installer (curl install.sh | bash), which is the supported,
+# current install path. It lays down a repo checkout + venv at
+# ~/.hermes/hermes-agent and a `hermes` launcher on PATH. We then add our two
+# extras: link the helper_tools plugin and register the Moonshot provider.
+#
+# Note: the pip package (`pip install hermes-agent`) is deprecated + stale and
+# is intentionally NOT used here.
 #
 #   ./scripts/install_hermes.sh
-#
-# Override the checkout location with HERMES_REPO=/path ./scripts/install_hermes.sh
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HERMES_REPO="${HERMES_REPO:-$HOME/hermes-agent}"
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+HERMES_REPO="${HERMES_REPO:-$HERMES_HOME/hermes-agent}"
 
-echo "==> Hermes checkout: $HERMES_REPO"
-if [ ! -d "$HERMES_REPO/.git" ]; then
-  git clone https://github.com/NousResearch/hermes-agent.git "$HERMES_REPO"
+if [ -f "$HERMES_REPO/run_agent.py" ]; then
+  echo "==> Hermes checkout already present: $HERMES_REPO"
 else
-  echo "    already cloned; pulling latest (ff-only)"
-  git -C "$HERMES_REPO" pull --ff-only || true
+  echo "==> Installing Hermes via the official installer"
+  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 fi
 
-echo "==> uv sync (installs Hermes' dependencies into its venv)"
-( cd "$HERMES_REPO" && uv sync )
-
-echo "==> Creating ~/.hermes layout"
-mkdir -p "$HOME/.hermes"/{cron,sessions,logs,memories,skills,plugins}
-if [ ! -f "$HOME/.hermes/config.yaml" ]; then
-  cp "$HERMES_REPO/cli-config.yaml.example" "$HOME/.hermes/config.yaml"
-  echo "    wrote ~/.hermes/config.yaml (edit model/provider as needed)"
+if [ ! -f "$HERMES_REPO/run_agent.py" ]; then
+  echo "!! Expected a Hermes checkout at $HERMES_REPO but didn't find run_agent.py." >&2
+  echo "   If the installer used a different location, set HERMES_REPO and re-run." >&2
+  exit 1
 fi
-touch "$HOME/.hermes/.env"
 
-echo "==> Linking helper_tools plugin into ~/.hermes/plugins"
-ln -sfn "$REPO_DIR/plugins/helper_tools" "$HOME/.hermes/plugins/helper_tools"
+echo "==> Linking helper_tools plugin into $HERMES_HOME/plugins"
+mkdir -p "$HERMES_HOME/plugins"
+ln -sfn "$REPO_DIR/plugins/helper_tools" "$HERMES_HOME/plugins/helper_tools"
 
 echo "==> Configuring Moonshot (Kimi) provider — key is pulled from \$MOONSHOT_API_KEY"
 ( cd "$HERMES_REPO" && uv run python "$REPO_DIR/scripts/configure_moonshot.py" )
@@ -37,10 +39,11 @@ echo "==> Configuring Moonshot (Kimi) provider — key is pulled from \$MOONSHOT
 KEY_ENV="${MOONSHOT_KEY_ENV:-MOONSHOT_API_KEY}"
 cat <<EOF
 
-Done. Next steps:
+Done. Hermes checkout: $HERMES_REPO
+Next steps:
   1. Provide the Moonshot key (Hermes reads it from \$$KEY_ENV):
-       echo '$KEY_ENV=sk-...' >> ~/.hermes/.env
+       echo '$KEY_ENV=sk-...' >> $HERMES_HOME/.env
   2. Smoke-test the harness:
-       HERMES_REPO="$HERMES_REPO" ./run.sh info
-       HERMES_REPO="$HERMES_REPO" ./run.sh once "List the files in this folder"
+       ./run.sh info
+       ./run.sh once "List the files in this folder"
 EOF

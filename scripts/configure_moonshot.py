@@ -32,7 +32,9 @@ def main() -> int:
         data = yaml.safe_load(CONFIG.read_text()) or {}
 
     # Replace any existing 'moonshot' entry (idempotent), keep the rest.
-    providers = [p for p in (data.get("custom_providers") or []) if p.get("name") != "moonshot"]
+    providers = [
+        p for p in (data.get("custom_providers") or []) if p.get("name") != "moonshot"
+    ]
     providers.append(
         {
             "name": "moonshot",
@@ -51,9 +53,13 @@ def main() -> int:
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
     CONFIG.write_text(yaml.safe_dump(data, sort_keys=False))
 
-    print(f"✓ moonshot provider set: base_url={BASE_URL}, model={MODEL}, key_env={KEY_ENV}")
+    print(
+        f"✓ moonshot provider set: base_url={BASE_URL}, model={MODEL}, key_env={KEY_ENV}"
+    )
     if not os.environ.get(KEY_ENV):
-        print(f"  ⚠  ${KEY_ENV} is not set yet — add it to ~/.hermes/.env before running the agent.")
+        print(
+            f"  ⚠  ${KEY_ENV} is not set yet — add it to ~/.hermes/.env before running the agent."
+        )
     return 0
 
 

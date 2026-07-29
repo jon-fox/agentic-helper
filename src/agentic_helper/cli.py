@@ -45,7 +45,9 @@ def _build_harness() -> Harness:
 
 def cmd_once(args: argparse.Namespace) -> int:
     helper = _build_harness()
-    print(helper.chat_once(args.message) if args.stateless else helper.ask(args.message))
+    print(
+        helper.chat_once(args.message) if args.stateless else helper.ask(args.message)
+    )
     return 0
 
 

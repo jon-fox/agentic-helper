@@ -14,11 +14,13 @@ from pathlib import Path
 
 
 def _candidate_locations() -> list[str]:
+    hermes_home = os.environ.get("HERMES_HOME") or str(Path.home() / ".hermes")
     return [
         loc
         for loc in (
             os.environ.get("HERMES_REPO"),
-            str(Path.home() / "hermes-agent"),
+            str(Path(hermes_home) / "hermes-agent"),  # official installer lands here
+            str(Path.home() / "hermes-agent"),  # manual `git clone` default
             str(Path(__file__).resolve().parents[2] / "vendor" / "hermes-agent"),
         )
         if loc

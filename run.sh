@@ -8,7 +8,17 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HERMES_REPO="${HERMES_REPO:-$HOME/hermes-agent}"
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+
+# Resolve the Hermes checkout: explicit env wins, else the official-installer
+# location (~/.hermes/hermes-agent), else a manual clone at ~/hermes-agent.
+HERMES_REPO="${HERMES_REPO:-}"
+if [ -z "$HERMES_REPO" ]; then
+  for d in "$HERMES_HOME/hermes-agent" "$HOME/hermes-agent"; do
+    if [ -f "$d/run_agent.py" ]; then HERMES_REPO="$d"; break; fi
+  done
+fi
+HERMES_REPO="${HERMES_REPO:-$HERMES_HOME/hermes-agent}"
 
 if [ ! -f "$HERMES_REPO/run_agent.py" ]; then
   echo "Hermes not found at: $HERMES_REPO" >&2
